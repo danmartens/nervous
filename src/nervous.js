@@ -9,6 +9,8 @@ Function.prototype.property = function() {
   return this;
 };
 
+Nervous.$ = (window.jQuery || window.Zepto);
+
 Nervous.noop = function() {
   return Array.prototype.slice.call(arguments, 0)[0];
 };
