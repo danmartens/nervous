@@ -11,7 +11,8 @@ module.exports = function(grunt) {
           'src/nervous.collection.js',
           'src/nervous.queue.js',
           'src/nervous.resource_adapter.js',
-          'src/nervous.resource.js'
+          'src/nervous.resource.js',
+          'src/nervous.view.js'
         ],
         dest: 'dist/nervous.js'
       }
