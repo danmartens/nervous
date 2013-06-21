@@ -9,6 +9,9 @@ Nervous.Resource = Nervous.Object.extend({
 
   isDestroying: false,
 
+  _fetchPromise: null,
+  _savePromise: null,
+
   initialize: function() {
     this.resourceProperties || (this.resourceProperties = []);
     return Nervous.Object.prototype.initialize.apply(this, arguments);
@@ -25,18 +28,24 @@ Nervous.Resource = Nervous.Object.extend({
   fetch: function(options) {
     var _this = this;
 
-    this.set('isFetching', true);
+    if (this._fetchPromise == null || !this._fetchPromise.isPending()) {
+      this.set('isFetching', true);
 
-    if (options == null) {
-      options = {};
+      if (options == null) {
+        options = {};
+      }
+      
+      options.url = this.resourceUrl();
+
+      this._fetchPromise = this.get('adapter').request('read', options)
+        .then(function(data) {
+          _this.deserialize(data);
+          _this.set('isFetching', false);
+          _this.set('isFetched', true);
+        });
     }
 
-    return this.get('adapter').request('read', this, options)
-      .success(function(json) {
-        _this.deserialize(json);
-        _this.set('isFetching', false);
-        _this.set('isFetched', true);
-      });
+    return this._fetchPromise;
   },
 
   save: function(options) {
@@ -47,15 +56,19 @@ Nervous.Resource = Nervous.Object.extend({
     if (options == null) {
       options = {};
     }
+    
+    options.url = this.resourceUrl();
 
-    method = (this.get('isFetched')) ? 'update' : 'create';
+    method = (this.resourceId()) ? 'update' : 'create';
 
-    return this.get('adapter').request(method, this, options)
-      .success(function(json) {
-        _this.deserialize(json);
+    this._savePromise = this.get('adapter').request(method, options)
+      .then(function(data) {
+        _this.deserialize(data);
         _this.set('isSaving', false);
         _this.set('isFetched', true);
       });
+
+    return this._savePromise;
   },
 
   destroy: function(options) {
@@ -66,9 +79,11 @@ Nervous.Resource = Nervous.Object.extend({
     if (options == null) {
       options = {};
     }
+    
+    options.url = this.resourceUrl();
 
-    return this.get('adapter').request('delete', this, options)
-      .success(function(json) {
+    return this.get('adapter').request('delete', options)
+      .then(function() {
         _this.set('isDestroying', false);
       });
   },

@@ -90,26 +90,35 @@ describe('Nervous.Resource', function() {
         person = Person.create({ adapter: adapter });
       });
 
-      it('should update `isFetching` and `isFetched` properties', function() {
+      it('should update `isFetching` and `isFetched` properties', function(done) {
         expect(person.isFetched).to.equal(false);
 
-        person.fetch();
+        person.fetch().then(function() {
+          expect(person.isFetching).to.equal(false);
+          expect(person.isFetched).to.equal(true);
+          done();
+        });
 
         expect(person.isFetching).to.equal(true);
 
         respondSuccess();
-
-        expect(person.isFetching).to.equal(false);
-        expect(person.isFetched).to.equal(true);
       });
 
-      it('should deserialize the response', function() {
-        person.fetch();
+      it('should deserialize the response', function(done) {
+        person.fetch().then(function() {
+          expect(person.firstName).to.equal('John');
+          expect(person.lastName).to.equal('Smith');
+          done();
+        });
 
         respondSuccess();
+      });
 
-        expect(person.firstName).to.equal('John');
-        expect(person.lastName).to.equal('Smith');
+      it('should return the same promise if called while still fetching', function() {
+        var promiseA = person.fetch();
+        var promiseB = person.fetch();
+
+        expect(promiseA).to.be(promiseB);
       });
     });
 
@@ -129,17 +138,18 @@ describe('Nervous.Resource', function() {
         person = Person.create({ adapter: adapter });
       });
 
-      it('should update `isSaving` and `isFetched` properties', function() {
+      it('should update `isSaving` and `isFetched` properties', function(done) {
         expect(person.isFetched).to.equal(false);
 
-        person.save();
+        person.save().then(function() {
+          expect(person.isSaving).to.equal(false);
+          expect(person.isFetched).to.equal(true);
+          done();
+        });
 
         expect(person.isSaving).to.equal(true);
 
         respondSuccess();
-
-        expect(person.isSaving).to.equal(false);
-        expect(person.isFetched).to.equal(true);
       });
     });
 
@@ -156,14 +166,15 @@ describe('Nervous.Resource', function() {
         person = Person.create({ adapter: adapter });
       });
 
-      it('should update the `isDestroying` property', function() {
-        person.destroy();
+      it('should update the `isDestroying` property', function(done) {
+        person.destroy().then(function() {
+          expect(person.isDestroying).to.equal(false);
+          done();
+        });
 
         expect(person.isDestroying).to.equal(true);
 
         respondSuccess();
-
-        expect(person.isDestroying).to.equal(false);
       });
     });
 

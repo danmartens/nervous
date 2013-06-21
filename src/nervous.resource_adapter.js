@@ -1,6 +1,6 @@
 Nervous.ResourceAdapter = Nervous.Object.extend({
-  request: function(method, resource, options) {
-    var crud, queue, _this = this;
+  request: function(method, options) {
+    var crud, deferred, _this = this;
 
     if (options == null) {
       options = {};
@@ -13,25 +13,24 @@ Nervous.ResourceAdapter = Nervous.Object.extend({
       'delete': 'DELETE'
     };
 
-    queue = Nervous.Queue.create();
+   	deferred = Q.defer();
 
     options = this.prepareRequest(Nervous.extend({
-      url: resource.get('url'),
       dataType: 'json',
       method: crud[method],
 
       success: function(json, status, xhr) {
-        queue.execute(_this, 'success', _this.prepareResponse(json), status, xhr);
+    		deferred.resolve(_this.prepareResponse(json));
       },
 
       error: function(xhr, errorType, error) {
-        queue.execute(_this, 'error', xhr, errorType, error);
+        deferred.reject(new Error(error));
       }
     }, options));
 
-    Nervous.$.ajax(options);
+    $.ajax(options);
 
-    return queue;
+    return deferred.promise;
   },
 
   prepareRequest: Nervous.noop,
